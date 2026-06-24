@@ -1,0 +1,102 @@
+/*
+ * gpio.c
+ *
+ *  Created on: Jun 11, 2026
+ *      Author: shoja
+ */
+
+#include "stm32f4xx.h"
+
+void LED_init (void)
+{
+    // Enable GPIOA clock
+    RCC->AHB1ENR |= (1U << 0); // Enable clock for GPIOA
+
+    // --- PA5 configuration ---
+
+    // MODER5 = 01 (output)
+    GPIOA->MODER &= ~(3U <<10); // Clear MODER5 bits
+    GPIOA->MODER |= (1U <<10);  // Set MODER5 to 01 (output)
+
+    // OTYPER5 = 0 (push-pull)
+    GPIOA->OTYPER &= ~(1U <<5); // Set OTYPER5 to 0 (push-pull)
+
+    // OSPEEDR5 = 00 (low speed)
+    GPIOA->OSPEEDR &= ~(3U <<10); // Set OSPEEDR5 to 00 (low speed)
+
+    // PUPDR5 = 00 (no pull-up, no pull-down)
+    GPIOA->PUPDR &= ~(3U <<10); // Set PUPDR5 to 00 (no pull-up, no pull-down)  
+}
+void OUTPUT_init (void)
+{
+    // Enable GPIOB clock
+    RCC->AHB1ENR |= (1U << 1); // Enable clock for GPIOB
+
+    // --- PB8 configuration ---
+
+    // MODER8 = 01 (output)
+    GPIOB->MODER &= ~(3U <<16); // Clear MODER8 bits
+    GPIOB->MODER |= (1U <<16);  // Set MODER8 to 01 (output)
+
+    // OTYPER8 = 0 (push-pull)
+    GPIOB->OTYPER &= ~(1U <<8); // Set OTYPER8 to 0 (push-pull)
+
+    // OSPEEDR8 = 00 (low speed)
+    GPIOB->OSPEEDR &= ~(3U <<16); // Set OSPEEDR8 to 00 (low speed)
+
+    // PUPDR8 = 00 (no pull-up, no pull-down)
+    GPIOB->PUPDR &= ~(3U <<16); // Set PUPDR8 to 00 (no pull-up, no pull-down)  
+}
+void OUTPUT_init_PC7 (void)
+{
+    // Enable GPIOC clock
+    RCC->AHB1ENR |= (1U << 2); // Enable clock for GPIOC
+
+    // --- PC7 configuration ---
+
+    // MODER7 = 01 (output)
+    GPIOC->MODER &= ~(3U <<14); // Clear MODER7 bits
+    GPIOC->MODER |= (1U <<14);  // Set MODER7 to 01 (output)
+
+    // OTYPER7 = 0 (push-pull)
+    GPIOC->OTYPER &= ~(1U <<7); // Set OTYPER7 to 0 (push-pull)
+
+    // OSPEEDR7 = 00 (low speed)
+    GPIOC->OSPEEDR &= ~(3U <<14); // Set OSPEEDR7 to 00 (low speed)
+
+    // PUPDR7 = 00 (no pull-up, no pull-down)
+    GPIOC->PUPDR &= ~(3U <<14); // Set PUPDR7 to 00 (no pull-up, no pull-down)  
+}
+void LED_Blink_Fast(void)
+{
+    GPIOA->ODR ^= (1U << 5); // Toggle PA5
+    for (volatile int i = 0; i < 50000; i++); // Delay
+}
+uint8_t OUTPUT_Blink_Fast(void)
+{
+    for (volatile int i = 0; i < 50000; i++); // Delay
+    GPIOB->ODR ^= (1U << 8); // Toggle PB8
+    return (GPIOB->ODR & (1U << 8)) ? 1 : 0; // Return the state of PB8
+}
+uint8_t OUTPUT_PC7_Blink_Fast(void)
+{
+    for (volatile int i = 0; i < 50000; i++); // Delay
+    GPIOC->ODR ^= (1U << 7); // Toggle PC7
+    return (GPIOC->ODR & (1U << 7)) ? 1 : 0; // Return the state of PC7
+}
+void Police_Blink_Fast(void)
+{
+    uint8_t temp = 0;
+    temp = (GPIOC->ODR & (1U << 7)) ? 1 : 0;
+    if (temp == 1)
+    {
+        GPIOC->ODR &= ~(1U << 7); // Turn off PC7
+        GPIOB->ODR |= (1U << 8);  // Turn on PB8
+    }
+    else
+    {
+        GPIOB->ODR &= ~(1U << 8); // Turn off PB8
+        GPIOC->ODR |= (1U << 7);  // Turn on PC7
+    }
+    for (volatile int i = 0; i < 50000; i++); // Delay
+}

@@ -1,0 +1,10 @@
+21:17:15 **** Incremental Build of configuration Debug for project STM32_GPIO ****
+make -j8 all 
+arm-none-eabi-size  STM32_GPIO.elf 
+   text	   data	    bss	    dec	    hex	filename
+   4932	     12	   1572	   6516	   1974	STM32_GPIO.elf
+Finished building: default.size.stdout
+ 
+
+21:17:16 Build Finished. 0 errors, 0 warnings. (took 830ms)
+
