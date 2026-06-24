@@ -5,3 +5,6 @@
 ../Core/Src/gpio.c:75:9:OUTPUT_PB8_Blink_Fast	2
 ../Core/Src/gpio.c:81:9:OUTPUT_PC7_Blink_Fast	2
 ../Core/Src/gpio.c:87:6:Police_Blink_Fast	3
+../Core/Src/gpio.c:103:6:BUTTON_init_PC13	1
+../Core/Src/gpio.c:116:9:BUTTON_Read_PC13	1
+../Core/Src/gpio.c:120:9:LED_Reset	1

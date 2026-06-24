@@ -100,3 +100,25 @@ void Police_Blink_Fast(void)
     }
     for (volatile int i = 0; i < 100000; i++); // Delay
 }
+void BUTTON_init_PC13(void)
+{
+    // Enable GPIOC clock
+    RCC->AHB1ENR |= (1U << 2); // Enable clock for GPIOC
+
+    // --- PC13 configuration ---
+
+    // MODER13 = 00 (input)
+    GPIOC->MODER &= ~(3U << 26); // Clear MODER13 bits
+
+    GPIOC->PUPDR &= ~(3U << 26); // Clear PUPDR13 bits
+    GPIOC->PUPDR |= (1U << 26);  // Set PUPDR13 to 01 (pull-up)
+}
+uint8_t BUTTON_Read_PC13(void)
+{
+    return (GPIOC->IDR & (1U << 13)) ? 1 : 0; // Return the state of PC13
+}
+uint8_t LED_Reset(void)
+{
+    GPIOA->ODR &= ~(1U << 5); // Turn off PA5
+    return (GPIOA->ODR & (1U << 5)) ? 1 : 0; // Return the state of PA5
+}

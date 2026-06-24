@@ -89,16 +89,20 @@ int main(void)
   LED_init(); // Initialize GPIO for LED
   OUTPUT_init_PB8(); // Initialize GPIO PB8 as OUTPUT
   OUTPUT_init_PC7(); // Initialize GPIO PC7 as OUTPUT
+  BUTTON_init_PC13(); // Initialize GPIO PC13 as INPUT
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    //LED_Blink_Fast(); // Blink the LED fast
+    if (!BUTTON_Read_PC13()) // Check if the button is pressed (active low)
+    LED_Blink_Fast(); // Blink the LED fast
+    else
+    LED_Reset(); // Reset the LED state
     //output_state_PB8 = OUTPUT_PB8_Blink_Fast(); // Blink the OUTPUT PB8 fast
     //output_state_PC7 = OUTPUT_PC7_Blink_Fast(); // Blink the OUTPUT PC7 fast
-    Police_Blink_Fast(); // Blink the OUTPUT PC7 and PB8 in a police light pattern
+    //Police_Blink_Fast(); // Blink the OUTPUT PC7 and PB8 in a police light pattern
     /* USER CODE END WHILE */
     
     /* USER CODE BEGIN 3 */
