@@ -5,120 +5,114 @@
  *      Author: shoja
  */
 
-#include "stm32f4xx.h"
+#include "stm32f4xx_hal.h"
 
-void LED_init (void)
+/* NOTE: HAL_Init() must be called before these functions so that
+ * SysTick is running and HAL_Delay() works correctly.
+ */
+
+void LED_init(void)
 {
-    // Enable GPIOA clock
-    RCC->AHB1ENR |= (1U << 0); // Enable clock for GPIOA
+    GPIO_InitTypeDef GPIO_InitStruct = {0};
 
-    // --- PA5 configuration ---
+    /* Enable GPIOA clock */
+    __HAL_RCC_GPIOA_CLK_ENABLE();
 
-    // MODER5 = 01 (output)
-    GPIOA->MODER &= ~(3U <<10); // Clear MODER5 bits
-    GPIOA->MODER |= (1U <<10);  // Set MODER5 to 01 (output)
-
-    // OTYPER5 = 0 (push-pull)
-    GPIOA->OTYPER &= ~(1U <<5); // Set OTYPER5 to 0 (push-pull)
-
-    // OSPEEDR5 = 00 (low speed)
-    GPIOA->OSPEEDR &= ~(3U <<10); // Set OSPEEDR5 to 00 (low speed)
-
-    // PUPDR5 = 00 (no pull-up, no pull-down)
-    GPIOA->PUPDR &= ~(3U <<10); // Set PUPDR5 to 00 (no pull-up, no pull-down)  
+    /* PA5 configuration */
+    GPIO_InitStruct.Pin       = GPIO_PIN_5;
+    GPIO_InitStruct.Mode      = GPIO_MODE_OUTPUT_PP;   /* Push-pull */
+    GPIO_InitStruct.Speed     = GPIO_SPEED_FREQ_LOW;   /* Low speed */
+    GPIO_InitStruct.Pull      = GPIO_NOPULL;           /* No pull-up, no pull-down */
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 }
-void OUTPUT_init_PB8 (void)
+
+void OUTPUT_init_PB8(void)
 {
-    // Enable GPIOB clock
-    RCC->AHB1ENR |= (1U << 1); // Enable clock for GPIOB
+    GPIO_InitTypeDef GPIO_InitStruct = {0};
 
-    // --- PB8 configuration ---
+    /* Enable GPIOB clock */
+    __HAL_RCC_GPIOB_CLK_ENABLE();
 
-    // MODER8 = 01 (output)
-    GPIOB->MODER &= ~(3U <<16); // Clear MODER8 bits
-    GPIOB->MODER |= (1U <<16);  // Set MODER8 to 01 (output)
-
-    // OTYPER8 = 0 (push-pull)
-    GPIOB->OTYPER &= ~(1U <<8); // Set OTYPER8 to 0 (push-pull)
-
-    // OSPEEDR8 = 00 (low speed)
-    GPIOB->OSPEEDR &= ~(3U <<16); // Set OSPEEDR8 to 00 (low speed)
-
-    // PUPDR8 = 00 (no pull-up, no pull-down)
-    GPIOB->PUPDR &= ~(3U <<16); // Set PUPDR8 to 00 (no pull-up, no pull-down)  
+    /* PB8 configuration */
+    GPIO_InitStruct.Pin       = GPIO_PIN_8;
+    GPIO_InitStruct.Mode      = GPIO_MODE_OUTPUT_PP;
+    GPIO_InitStruct.Speed     = GPIO_SPEED_FREQ_LOW;
+    GPIO_InitStruct.Pull      = GPIO_NOPULL;
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 }
-void OUTPUT_init_PC7 (void)
+
+void OUTPUT_init_PC7(void)
 {
-    // Enable GPIOC clock
-    RCC->AHB1ENR |= (1U << 2); // Enable clock for GPIOC
+    GPIO_InitTypeDef GPIO_InitStruct = {0};
 
-    // --- PC7 configuration ---
+    /* Enable GPIOC clock */
+    __HAL_RCC_GPIOC_CLK_ENABLE();
 
-    // MODER7 = 01 (output)
-    GPIOC->MODER &= ~(3U <<14); // Clear MODER7 bits
-    GPIOC->MODER |= (1U <<14);  // Set MODER7 to 01 (output)
-
-    // OTYPER7 = 0 (push-pull)
-    GPIOC->OTYPER &= ~(1U <<7); // Set OTYPER7 to 0 (push-pull)
-
-    // OSPEEDR7 = 00 (low speed)
-    GPIOC->OSPEEDR &= ~(3U <<14); // Set OSPEEDR7 to 00 (low speed)
-
-    // PUPDR7 = 00 (no pull-up, no pull-down)
-    GPIOC->PUPDR &= ~(3U <<14); // Set PUPDR7 to 00 (no pull-up, no pull-down)  
+    /* PC7 configuration */
+    GPIO_InitStruct.Pin       = GPIO_PIN_7;
+    GPIO_InitStruct.Mode      = GPIO_MODE_OUTPUT_PP;
+    GPIO_InitStruct.Speed     = GPIO_SPEED_FREQ_LOW;
+    GPIO_InitStruct.Pull      = GPIO_NOPULL;
+    HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 }
+
 void LED_Blink_Fast(void)
 {
-    GPIOA->ODR ^= (1U << 5); // Toggle PA5
-    for (volatile int i = 0; i < 50000; i++); // Delay
+    HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5); /* Toggle PA5 */
+    HAL_Delay(30);                         /* ~fast blink delay */
 }
+
 uint8_t OUTPUT_PB8_Blink_Fast(void)
 {
-    for (volatile int i = 0; i < 50000; i++); // Delay
-    GPIOB->ODR ^= (1U << 8); // Toggle PB8
-    return (GPIOB->ODR & (1U << 8)) ? 1 : 0; // Return the state of PB8
+    HAL_Delay(50);
+    HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_8); /* Toggle PB8 */
+    return (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_8) == GPIO_PIN_SET) ? 1 : 0;
 }
+
 uint8_t OUTPUT_PC7_Blink_Fast(void)
 {
-    for (volatile int i = 0; i < 50000; i++); // Delay
-    GPIOC->ODR ^= (1U << 7); // Toggle PC7
-    return (GPIOC->ODR & (1U << 7)) ? 1 : 0; // Return the state of PC7
+    HAL_Delay(50);
+    HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_7); /* Toggle PC7 */
+    return (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_7) == GPIO_PIN_SET) ? 1 : 0;
 }
+
 void Police_Blink_Fast(void)
 {
-    uint8_t temp = 0;
-    temp = (GPIOC->ODR & (1U << 7)) ? 1 : 0;
-    if (temp == 1)
+    if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_7) == GPIO_PIN_SET)
     {
-        GPIOC->ODR &= ~(1U << 7); // Turn off PC7
-        GPIOB->ODR |= (1U << 8);  // Turn on PB8
+        HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, GPIO_PIN_RESET); /* Turn off PC7 */
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);   /* Turn on PB8 */
     }
     else
     {
-        GPIOB->ODR &= ~(1U << 8); // Turn off PB8
-        GPIOC->ODR |= (1U << 7);  // Turn on PC7
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET); /* Turn off PB8 */
+        HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, GPIO_PIN_SET);   /* Turn on PC7 */
     }
-    for (volatile int i = 0; i < 100000; i++); // Delay
+    HAL_Delay(100);
 }
+
 void BUTTON_init_PC13(void)
 {
-    // Enable GPIOC clock
-    RCC->AHB1ENR |= (1U << 2); // Enable clock for GPIOC
+    GPIO_InitTypeDef GPIO_InitStruct = {0};
 
-    // --- PC13 configuration ---
+    /* Enable GPIOC clock */
+    __HAL_RCC_GPIOC_CLK_ENABLE();
 
-    // MODER13 = 00 (input)
-    GPIOC->MODER &= ~(3U << 26); // Clear MODER13 bits
-
-    GPIOC->PUPDR &= ~(3U << 26); // Clear PUPDR13 bits
-    GPIOC->PUPDR |= (1U << 26);  // Set PUPDR13 to 01 (pull-up)
+    /* PC13 configuration */
+    GPIO_InitStruct.Pin       = GPIO_PIN_13;
+    GPIO_InitStruct.Mode      = GPIO_MODE_INPUT;
+    GPIO_InitStruct.Pull      = GPIO_PULLUP;           /* Pull-up */
+    GPIO_InitStruct.Speed     = GPIO_SPEED_FREQ_LOW;   /* Not critical for input, but good practice */
+    HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 }
+
 uint8_t BUTTON_Read_PC13(void)
 {
-    return (GPIOC->IDR & (1U << 13)) ? 1 : 0; // Return the state of PC13
+    return (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13) == GPIO_PIN_SET) ? 1 : 0;
 }
+
 uint8_t LED_Reset(void)
 {
-    GPIOA->ODR &= ~(1U << 5); // Turn off PA5
-    return (GPIOA->ODR & (1U << 5)) ? 1 : 0; // Return the state of PA5
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET); /* Turn off PA5 */
+    return (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_5) == GPIO_PIN_SET) ? 1 : 0;
 }

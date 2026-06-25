@@ -34,34 +34,34 @@ $(wildcard ../makefile.init) \
 $(wildcard ../makefile.targets) \
 
 
-BUILD_ARTIFACT_NAME := STM32_GPIO
+BUILD_ARTIFACT_NAME := STM32_GPIO_HAL
 BUILD_ARTIFACT_EXTENSION := elf
 BUILD_ARTIFACT_PREFIX :=
 BUILD_ARTIFACT := $(BUILD_ARTIFACT_PREFIX)$(BUILD_ARTIFACT_NAME)$(if $(BUILD_ARTIFACT_EXTENSION),.$(BUILD_ARTIFACT_EXTENSION),)
 
 # Add inputs and outputs from these tool invocations to the build variables 
 EXECUTABLES += \
-STM32_GPIO.elf \
+STM32_GPIO_HAL.elf \
 
 MAP_FILES += \
-STM32_GPIO.map \
+STM32_GPIO_HAL.map \
 
 SIZE_OUTPUT += \
 default.size.stdout \
 
 OBJDUMP_LIST += \
-STM32_GPIO.list \
+STM32_GPIO_HAL.list \
 
 
 # All Target
 all: main-build
 
 # Main-build Target
-main-build: STM32_GPIO.elf secondary-outputs
+main-build: STM32_GPIO_HAL.elf secondary-outputs
 
 # Tool invocations
-STM32_GPIO.elf STM32_GPIO.map: $(OBJS) $(USER_OBJS) C:\Users\masoud\Repository\STM32_Class\STM32_GPIO_BAREMETAL\STM32_GPIO\STM32F411RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "STM32_GPIO.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\masoud\Repository\STM32_Class\STM32_GPIO_BAREMETAL\STM32_GPIO\STM32F411RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="STM32_GPIO.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+STM32_GPIO_HAL.elf STM32_GPIO_HAL.map: $(OBJS) $(USER_OBJS) C:\Users\masoud\Repository\STM32_Class\STM32_GPIO_HAL\STM32F411RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "STM32_GPIO_HAL.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\masoud\Repository\STM32_Class\STM32_GPIO_HAL\STM32F411RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="STM32_GPIO_HAL.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
@@ -70,14 +70,14 @@ default.size.stdout: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
 	@echo 'Finished building: $@'
 	@echo ' '
 
-STM32_GPIO.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "STM32_GPIO.list"
+STM32_GPIO_HAL.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "STM32_GPIO_HAL.list"
 	@echo 'Finished building: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) STM32_GPIO.elf STM32_GPIO.list STM32_GPIO.map default.size.stdout
+	-$(RM) STM32_GPIO_HAL.elf STM32_GPIO_HAL.list STM32_GPIO_HAL.map default.size.stdout
 	-@echo ' '
 
 secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST)
