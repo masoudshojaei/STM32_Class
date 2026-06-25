@@ -1,0 +1,377 @@
+/* eeprom.c - EEPROM emulation using Flash for STM32G4A1KEU6 */
+
+#include "eeprom.h"
+#include <string.h>
+#include <stdio.h>
+#include "CO_app_STM32.h"
+#include "OD.h"
+
+EEPROM_Config_t EEPROM_CONFIG;//default factory config
+EEPROM_Config_t EEPROM_CONFIG_DEFAULT;//reading default factory config
+EEPROM_Config_t EEPROM_CONFIG_NEW;//new config to be written
+EEPROM_Config_t EEPROM_CONFIG_BACKUP;//copy of config beeing used effectivley in program
+uint8_t	EEPROM_STATUS = NO_NEW_CONFIG_WRITTEN;
+uint8_t flash_write_status = FLASH_FREE;
+void EEPROM_Read_Default_Config(void)
+{
+	// Flash base address where the config is stored
+	const uint32_t *flashPtr = (const uint32_t *)EEPROM_PAGE_ADDRESS_CONFIG;
+
+	// Destination RAM struct
+	uint32_t *ramPtr = (uint32_t *)&EEPROM_CONFIG_DEFAULT;
+
+	// Copy the struct double-word by double-word
+	for (uint32_t i = 0; i < sizeof(EEPROM_Config_t) / sizeof(uint32_t); i++)
+	{
+		ramPtr[i] = flashPtr[i];
+	}
+
+}
+
+void EEPROM_Default_To_Backup(void)
+{
+	// Flash base address where the config is stored
+	const uint32_t *flashPtr = (const uint32_t *)EEPROM_PAGE_ADDRESS_CONFIG;
+
+	// Destination RAM struct
+	uint32_t *ramPtr = (uint32_t *)&EEPROM_CONFIG_BACKUP;
+
+	// Copy the struct double-word by double-word
+	for (uint32_t i = 0; i < sizeof(EEPROM_Config_t) / sizeof(uint32_t); i++)
+	{
+		ramPtr[i] = flashPtr[i];
+	}
+
+}
+
+void EEPROM_New_To_Backup(void)
+{
+	// Flash base address where the config is stored
+	const uint32_t *flashPtr = (const uint32_t *)EEPROM_PAGE_ADDRESS_CONFIG_NEW;
+
+	// Destination RAM struct
+	uint32_t *ramPtr = (uint32_t *)&EEPROM_CONFIG_BACKUP;
+
+	// Copy the struct double-word by double-word
+	for (uint32_t i = 0; i < sizeof(EEPROM_Config_t) / sizeof(uint32_t); i++)
+	{
+		ramPtr[i] = flashPtr[i];
+	}
+
+}
+void EEPROM_Read_Config_New(void)
+{
+	// Flash base address where the config is stored
+	const uint32_t *flashPtr = (const uint32_t *)EEPROM_PAGE_ADDRESS_CONFIG_NEW;
+
+	// Destination RAM struct
+	uint32_t *ramPtr = (uint32_t *)&EEPROM_CONFIG_NEW;
+
+	// Copy the struct double-word by double-word
+	for (uint32_t i = 0; i < sizeof(EEPROM_Config_t) / sizeof(uint32_t); i++)
+	{
+		ramPtr[i] = flashPtr[i];
+	}
+
+}
+
+// Write the default configuration
+__attribute__((section(".RamFunc")))
+void EEPROM_Write_Config_Default(void)
+{
+    HAL_FLASH_Unlock();
+
+    // Erase the page
+    FLASH_EraseInitTypeDef eraseInit;
+    uint32_t pageError, erase_error_code,write_error_code;
+
+    eraseInit.TypeErase   = FLASH_TYPEERASE_PAGES;
+    eraseInit.Banks       = FLASH_BANK_1;
+    eraseInit.Page        = EEPROM_PAGE_NUMBER_CONFIG; // Last page for 512KB
+    eraseInit.NbPages     = 1;
+    erase_error_code = HAL_FLASHEx_Erase(&eraseInit, &pageError);
+    if (erase_error_code != HAL_OK) {
+        HAL_FLASH_Lock();
+        return;
+    }
+	// Program double words (64-bit)
+    const uint64_t *src = (const uint64_t *)&EEPROM_CONFIG;
+    for (uint32_t i = 0; i < sizeof(EEPROM_Config_t) / sizeof(uint64_t); i++)
+    {
+    	write_error_code = HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, EEPROM_PAGE_ADDRESS_CONFIG + (i * 8), src[i]);
+        if (write_error_code != HAL_OK)
+        {
+            // Optional: handle error (e.g., break, log)
+        	HAL_FLASH_Lock();
+            break;
+        }
+    }
+
+    HAL_FLASH_Lock();
+}
+
+
+// Write new configuration
+/*__attribute__((section(".RamFunc")))
+void EEPROM_Write_Config_New(void)
+{
+	flash_write_status = FLASH_BUSY;
+	__disable_irq();
+	HAL_Delay(10);
+    HAL_FLASH_Unlock();
+
+    // Erase the page
+    FLASH_EraseInitTypeDef eraseInit;
+    uint32_t pageError, erase_error_code,write_error_code;
+
+    eraseInit.TypeErase   = FLASH_TYPEERASE_PAGES;
+    eraseInit.Banks       = FLASH_BANK_1;
+    eraseInit.Page        = EEPROM_PAGE_NUMBER_CONFIG_NEW; // Last page for 512KB
+    eraseInit.NbPages     = 1;
+    erase_error_code = HAL_FLASHEx_Erase(&eraseInit, &pageError);
+    if (erase_error_code != HAL_OK) {
+        HAL_FLASH_Lock();
+        flash_write_status = FLASH_FREE;
+        return;
+    }
+
+    // Program double words (64-bit)
+    const uint64_t *src = (const uint64_t *)&EEPROM_CONFIG_NEW;
+    for (uint32_t i = 0; i < sizeof(EEPROM_Config_t) / sizeof(uint64_t); i++)
+    {
+    	write_error_code = HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, EEPROM_PAGE_ADDRESS_CONFIG_NEW + (i * 8), src[i]);
+        if (write_error_code != HAL_OK)
+        {
+            // Optional: handle error (e.g., break, log)
+        	HAL_FLASH_Lock();
+            break;
+        }
+    }
+
+    HAL_FLASH_Lock();
+    __enable_irq();
+    HAL_Delay(10);
+    flash_write_status = FLASH_FREE;
+}*/
+
+__attribute__((section(".RamFunc"), noinline, used))
+void EEPROM_Write_Config_New(void)
+{
+    const uint64_t *src = (const uint64_t *)&EEPROM_CONFIG_NEW;
+    uint32_t addr = EEPROM_PAGE_ADDRESS_CONFIG_NEW;
+
+    // STM32G4 specifics
+    uint32_t page_number = EEPROM_PAGE_NUMBER_CONFIG_NEW;
+    uint32_t count = (sizeof(EEPROM_Config_t) + 7) / 8;   // number of 64-bit writes
+
+    // ----------------------------------------------------------
+    // UNLOCK FLASH (register-level)
+    // ----------------------------------------------------------
+    if (FLASH->CR & FLASH_CR_LOCK) {
+        FLASH->KEYR = FLASH_KEY1;
+        FLASH->KEYR = FLASH_KEY2;
+    }
+
+    // ----------------------------------------------------------
+    // ERASE PAGE
+    // ----------------------------------------------------------
+    // Clear all previous flash status flags
+    FLASH->SR |= FLASH_SR_PROGERR | FLASH_SR_PGAERR | FLASH_SR_PGSERR |
+                 FLASH_SR_WRPERR | FLASH_SR_EOP;
+
+    // Enable page erase mode
+    FLASH->CR |= FLASH_CR_PER;
+
+    // Set page number (12-bit PNB)
+    FLASH->CR &= ~FLASH_CR_PNB;
+    FLASH->CR |= (page_number << FLASH_CR_PNB_Pos);
+
+    // Start erase
+    FLASH->CR |= FLASH_CR_STRT;
+
+    // Wait for erase to complete
+    while (FLASH->SR & FLASH_SR_BSY) { /* feed WDG if needed */ }
+
+    // Exit erase mode
+    FLASH->CR &= ~FLASH_CR_PER;
+
+    // Check erase errors
+    if (FLASH->SR & (FLASH_SR_WRPERR | FLASH_SR_PGAERR |
+                     FLASH_SR_PROGERR | FLASH_SR_PGSERR)) {
+
+        FLASH->SR |= FLASH_SR_PROGERR | FLASH_SR_PGAERR | FLASH_SR_PGSERR |
+                     FLASH_SR_WRPERR | FLASH_SR_EOP;
+
+        FLASH->CR |= FLASH_CR_LOCK;
+        return;
+    }
+
+    // ----------------------------------------------------------
+    // PROGRAM DOUBLE-WORDS (64-bit)
+    // ----------------------------------------------------------
+    for (uint32_t i = 0; i < count; i++)
+    {
+        // Clear old flags
+        FLASH->SR |= FLASH_SR_PROGERR | FLASH_SR_PGAERR | FLASH_SR_PGSERR |
+                     FLASH_SR_WRPERR | FLASH_SR_EOP;
+
+        // Enable programming mode
+        FLASH->CR |= FLASH_CR_PG;
+
+        // Destination address must be 64-bit aligned
+        uint64_t *dest = (uint64_t *)(addr + (i * 8));
+
+        // Write actual 64-bit data
+        *dest = src[i];
+
+        // Wait for completion
+        while (FLASH->SR & FLASH_SR_BSY) { }
+
+        // Disable PG
+        FLASH->CR &= ~FLASH_CR_PG;
+
+        // Check for program errors
+        if (FLASH->SR & (FLASH_SR_PROGERR | FLASH_SR_PGAERR |
+                         FLASH_SR_PGSERR | FLASH_SR_WRPERR)) {
+
+            FLASH->SR |= FLASH_SR_PROGERR | FLASH_SR_PGAERR |
+                         FLASH_SR_PGSERR | FLASH_SR_WRPERR | FLASH_SR_EOP;
+
+            FLASH->CR |= FLASH_CR_LOCK;
+            return;
+        }
+    }
+
+    // ----------------------------------------------------------
+    // LOCK FLASH
+    // ----------------------------------------------------------
+    FLASH->CR |= FLASH_CR_LOCK;
+}
+
+
+uint8_t is_non_zero_config(const EEPROM_Config_t *cfg)
+{
+    const uint8_t *p = (const uint8_t *)cfg;
+    for (size_t i = 0; i < sizeof(EEPROM_Config_t); i++) {
+        if (p[i] != 0)
+        	return 1; // found a non-zero byte
+    }
+    return 0;
+}
+
+void EEPROM_Set_Default(void)
+{
+	EEPROM_CONFIG.SOFTWARE_VERSION 			= SOFTWARE_VERSION_VAL;
+	EEPROM_CONFIG.OUT_TYPE 					= OUT_TYPE_VAL;
+	EEPROM_CONFIG.ANGULAR_RANGE 			= ANGULAR_RANGE_VAL;
+	EEPROM_CONFIG.IMU_MODE 					= IMU_MODE_VAL;
+	EEPROM_CONFIG.CAN_ID 					= DEFAULT_CAN_ID;
+	EEPROM_CONFIG.CAN_BAUDRATE 				= DEFAULT_CAN_BAUDRATE;
+	EEPROM_CONFIG.EEPROM_STATUS_ID 			= NEW_CONFIG_WRITTEN;
+	EEPROM_CONFIG.EEPROM_STATUS_BAUDRATE	= NEW_CONFIG_WRITTEN;
+	EEPROM_CONFIG.RAM_STATUS_ID 			= 0;
+	EEPROM_CONFIG.RAM_STATUS_BAUDRATE 		= 0;
+}
+void EEPROM_Set_New_Empty(void)
+{
+	EEPROM_CONFIG_NEW.SOFTWARE_VERSION 			= 0;
+	EEPROM_CONFIG_NEW.OUT_TYPE 					= 0;
+	EEPROM_CONFIG_NEW.ANGULAR_RANGE 			= 0;
+	EEPROM_CONFIG_NEW.IMU_MODE 					= 0;
+	EEPROM_CONFIG_NEW.CAN_ID 					= 0;
+	EEPROM_CONFIG_NEW.EEPROM_STATUS_ID 			= 0;
+	EEPROM_CONFIG_NEW.RAM_STATUS_ID 			= 0;
+	EEPROM_CONFIG_NEW.CAN_BAUDRATE 				= 0;
+	EEPROM_CONFIG_NEW.EEPROM_STATUS_BAUDRATE	= 0;
+	EEPROM_CONFIG_NEW.RAM_STATUS_BAUDRATE 		= 0;
+}
+void EEPROM_Set_Default_Empty(void)
+{
+	EEPROM_CONFIG.SOFTWARE_VERSION 			= 0;
+	EEPROM_CONFIG.OUT_TYPE 					= 0;
+	EEPROM_CONFIG.ANGULAR_RANGE 			= 0;
+	EEPROM_CONFIG.IMU_MODE 					= 0;
+	EEPROM_CONFIG.CAN_ID 					= 0;
+	EEPROM_CONFIG.EEPROM_STATUS_ID 			= 0;
+	EEPROM_CONFIG.RAM_STATUS_ID 			= 0;
+	EEPROM_CONFIG.CAN_BAUDRATE 				= 0;
+	EEPROM_CONFIG.EEPROM_STATUS_BAUDRATE	= 0;
+	EEPROM_CONFIG.RAM_STATUS_BAUDRATE 		= 0;
+}
+// Initialize EEPROM configuration with default values if uninitialized or in debug mode
+void EEPROM_Init(void)
+{
+	EEPROM_Read_Default_Config();
+	EEPROM_Read_Config_New();
+	EEPROM_Set_Default();
+	if (EEPROM_CONFIG_DEFAULT.EEPROM_STATUS_ID != NEW_CONFIG_WRITTEN)
+	{
+		EEPROM_Write_Config_Default();
+	}
+   // Check if the new config is valid (non-zero and different from default)
+    if (EEPROM_CONFIG_NEW.EEPROM_STATUS_ID == NEW_CONFIG_WRITTEN ||
+    	EEPROM_CONFIG_NEW.RAM_STATUS_BAUDRATE == NEW_CONFIG_WRITTEN )
+    {
+        // New config is valid -> use it
+        EEPROM_New_To_Backup();
+        EEPROM_CONFIG_NEW.RAM_STATUS_ID = 0;
+        EEPROM_CONFIG_NEW.RAM_STATUS_BAUDRATE = 0;
+    }
+    else if (EEPROM_CONFIG_NEW.EEPROM_STATUS_ID == SET_BACK_TO_DEFAULT )
+    {
+    	// using default config
+    	EEPROM_Set_New_Empty();
+    	EEPROM_Default_To_Backup();
+    }
+    else
+    {
+    	// using default config
+    	EEPROM_Default_To_Backup();
+
+    }
+
+
+    // Otherwise, keep default config in EEPROM_CONFIG*/
+
+}
+void EEPROM_Check_For_Config_New(void)
+{
+    if ((canopenNodeSTM32->canOpenStack->LSSslave->service == CO_LSS_CFG_STORE)&&
+    		(canopenNodeSTM32->activeNodeID != canopenNodeSTM32->desiredNodeID)&&
+			(EEPROM_CONFIG_NEW.RAM_STATUS_ID != NEW_CONFIG_WRITTEN))
+    {
+    	EEPROM_CONFIG_NEW.CAN_ID 			= canopenNodeSTM32->desiredNodeID;
+    	EEPROM_CONFIG_NEW.RAM_STATUS_ID 	= NEW_CONFIG_WRITTEN;
+    	EEPROM_CONFIG_NEW.EEPROM_STATUS_ID 	= NEW_CONFIG_WRITTEN;
+
+		EEPROM_CONFIG_NEW.CAN_BAUDRATE 				= EEPROM_CONFIG_BACKUP.CAN_BAUDRATE;
+		EEPROM_CONFIG_NEW.RAM_STATUS_BAUDRATE 		= EEPROM_CONFIG_BACKUP.RAM_STATUS_BAUDRATE;
+		EEPROM_CONFIG_NEW.EEPROM_STATUS_BAUDRATE 	= EEPROM_CONFIG_BACKUP.EEPROM_STATUS_BAUDRATE;
+
+		EEPROM_CONFIG_NEW.SOFTWARE_VERSION 			= EEPROM_CONFIG_BACKUP.SOFTWARE_VERSION;
+		EEPROM_CONFIG_NEW.OUT_TYPE 					= EEPROM_CONFIG_BACKUP.OUT_TYPE;
+		EEPROM_CONFIG_NEW.ANGULAR_RANGE 			= EEPROM_CONFIG_BACKUP.ANGULAR_RANGE;
+		EEPROM_CONFIG_NEW.IMU_MODE 					= EEPROM_CONFIG_BACKUP.IMU_MODE;
+
+    	EEPROM_Write_Config_New();
+    }
+    else if ((canopenNodeSTM32->canOpenStack->LSSslave->service == CO_LSS_CFG_BIT_TIMING)&&
+    		(canopenNodeSTM32->canOpenStack->LSSslave->TXbuff->data[1] == 0)&&
+    		(EEPROM_CONFIG_NEW.RAM_STATUS_BAUDRATE != NEW_CONFIG_WRITTEN))
+    {
+    	EEPROM_CONFIG_NEW.CAN_BAUDRATE 				= canopenNodeSTM32->baudrate;
+    	EEPROM_CONFIG_NEW.RAM_STATUS_BAUDRATE 		= NEW_CONFIG_WRITTEN;
+    	EEPROM_CONFIG_NEW.EEPROM_STATUS_BAUDRATE 	= NEW_CONFIG_WRITTEN;
+
+		EEPROM_CONFIG_NEW.CAN_ID 			= EEPROM_CONFIG_BACKUP.CAN_ID;
+		EEPROM_CONFIG_NEW.RAM_STATUS_ID 	= EEPROM_CONFIG_BACKUP.RAM_STATUS_ID;
+		EEPROM_CONFIG_NEW.EEPROM_STATUS_ID 	= EEPROM_CONFIG_BACKUP.EEPROM_STATUS_ID;
+
+		EEPROM_CONFIG_NEW.SOFTWARE_VERSION 	= EEPROM_CONFIG_BACKUP.SOFTWARE_VERSION;
+		EEPROM_CONFIG_NEW.OUT_TYPE 			= EEPROM_CONFIG_BACKUP.OUT_TYPE;
+		EEPROM_CONFIG_NEW.ANGULAR_RANGE 	= EEPROM_CONFIG_BACKUP.ANGULAR_RANGE;
+		EEPROM_CONFIG_NEW.IMU_MODE 			= EEPROM_CONFIG_BACKUP.IMU_MODE;
+
+    	EEPROM_Write_Config_New();
+    }
+}

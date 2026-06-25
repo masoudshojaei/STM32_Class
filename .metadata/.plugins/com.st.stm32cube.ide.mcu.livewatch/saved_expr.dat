@@ -1,0 +1,10 @@
+EEPROM_CONFIG_BACKUP
+EEPROM_CONFIG
+EEPROM_CONFIG_NEW
+EEPROM_CONFIG_DEFAULT
+in_max
+in_min
+dac_max
+dac_min
+dac1_out1_value
+dac1_out2_value

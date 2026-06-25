@@ -1,0 +1,10 @@
+16:57:11 **** Incremental Build of configuration Debug for project st05-79-inclinometro_V01 ****
+make -j8 all 
+arm-none-eabi-size  st05-79-inclinometro_V01.elf 
+   text	   data	    bss	    dec	    hex	filename
+ 137256	      0	   6296	 143552	  230c0	st05-79-inclinometro_V01.elf
+Finished building: default.size.stdout
+ 
+
+16:57:12 Build Finished. 0 errors, 0 warnings. (took 776ms)
+

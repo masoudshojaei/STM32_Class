@@ -1,0 +1,73 @@
+/**
+  ******************************************************************************
+  * @file    analog_output.h
+  * @brief   Flexible analog output interface for mapping values to DAC outputs.
+  * @author
+  * @date
+  ******************************************************************************
+  * @attention
+  *
+  * This module provides functions to map a given value within a user-defined
+  * range to DAC1 channel outputs (OUT1 and OUT2), supporting flexible
+  * configuration and scaling.
+  *
+  ******************************************************************************
+  */
+
+#ifndef __ANALOG_OUTPUT_H__
+#define __ANALOG_OUTPUT_H__
+
+#include "main.h"
+#include "dac.h"
+#include "eeprom.h"
+
+/* ==== User Configuration ==== */
+
+// DAC resolution range
+#define DAC_OUTPUT_CURRENT_MIN        792
+#define DAC_OUTPUT_CURRENT_MAX        3982U
+
+#define DAC_OUTPUT_VOLTAGE_05_45_MIN        205U
+#define DAC_OUTPUT_VOLTAGE_05_45MAX        1843U
+
+#define DAC_OUTPUT_VOLTAGE_MIN        0
+#define DAC_OUTPUT_VOLTAGE_MAX        4095U
+
+// Input value range (Can be overridden per function call)
+#define INPUT_MIN     0U
+#define INPUT_MAX     36000U
+
+#define INPUT_MIN_0_DEG    0.0f
+#define INPUT_MAX_30_DEG   30.0f
+#define INPUT_MIN_90_DEG  -90.0f
+#define INPUT_MAX_90_DEG   90.0f
+#define INPUT_MIN_180_DEG -180.0f
+#define INPUT_MAX_180_DEG  180.0f
+#define INPUT_MIN_360_DEG  0.0f
+#define INPUT_MAX_360_DEG  360.0f
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/**
+  * @brief  Set DAC1 OUT1 with a value scaled to the DAC range.
+  * @param  value: Input value to map
+  * @retval None
+  */
+void AnalogOutput_SetDAC1_OUT1(int32_t value);
+
+/**
+  * @brief  Set DAC1 OUT2 with a value scaled to the DAC range.
+  * @param  value: Input value to map
+  * @retval None
+  */
+void AnalogOutput_SetDAC1_OUT2(int32_t value);
+
+uint16_t Map_Angle_To_DAC(float angle, float angle_min, float angle_max);
+uint16_t Map_Angle_To_DAC_Monopol(float angle, float angle_min, float angle_max);
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* __ANALOG_OUTPUT_H__ */

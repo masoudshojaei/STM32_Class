@@ -1,0 +1,111 @@
+/* USER CODE BEGIN Header */
+/**
+  ******************************************************************************
+  * @file    eeprom.h
+  * @brief   This file contains all the function prototypes for
+  *          the eeprom.c file
+  ******************************************************************************
+  */
+/* USER CODE END Header */
+/* Define to prevent recursive inclusion -------------------------------------*/
+#ifndef __EEPROM_H__
+#define __EEPROM_H__
+
+/* eeprom.h - EEPROM emulation using Flash for STM32G4A1KEU6 */
+
+/* Includes ------------------------------------------------------------------*/
+#include "stm32g4xx_hal.h"
+#include <stdint.h>
+#include <stdio.h>
+
+/* USER CODE BEGIN Includes */
+
+/* Store configuration in the last flash page: Page 255 = 0x0807F800 for 512KB */
+#define EEPROM_PAGE_ADDRESS_CONFIG    		   ((uint32_t)0x0807F000)//254
+#define EEPROM_PAGE_ADDRESS_CONFIG_NEW         ((uint32_t)0x0807F800)//255
+
+#define EEPROM_PAGE_NUMBER_CONFIG      		   254U
+#define EEPROM_PAGE_NUMBER_CONFIG_NEW          255U
+
+//SOFTWARE_VERSION
+#define SW_VERSION                0x0100 // Software version 1.0.0
+#define DEBUG_SOFTWARE            0xEEEE
+
+//OUT_TYPE
+#define	VOLTAGE	  			0
+#define CURRENT	  			1
+#define CAN	      			2
+#define CAN_V	  			3
+#define CAN_C	  			4
+
+//ANGULAR_RANGE
+#define A_90_DEG  			0
+#define A_180_DEG 			1
+#define A_360_DEG 			2
+#define A_FULL_FIXED_DBG	3
+
+//IMU_MODE
+#define ROLL_ONLY      		0
+#define PITCH_ONLY     		1
+#define ROLL_PITCH     		2
+#define ROLL_PITCH_YAW 		3
+
+//CAN_BAUDRATE
+#define CANOPEN_10KBPS		10U
+#define CANOPEN_20KBPS		20U
+#define CANOPEN_50KBPS		50U
+#define CANOPEN_100KBPS		100U
+#define CANOPEN_125KBPS		125U
+#define CANOPEN_250KBPS		250U
+#define CANOPEN_500KBPS		500U
+#define CANOPEN_800KBPS		800U
+#define CANOPEN_1000KBPS	1000U
+
+#define	NO_NEW_CONFIG_WRITTEN	0
+#define	NEW_CONFIG_WRITTEN		1
+#define SET_BACK_TO_DEFAULT		2
+//DEFAULT VALUES
+#define SOFTWARE_VERSION_VAL      DEBUG_SOFTWARE//0x0100 // Software version 1.0.0 (In case of DEBUG, you have to change this value to DEBUG_SOFTWARE, to be able to change the configuration of the output mode)
+#define OUT_TYPE_VAL        	  VOLTAGE
+#define ANGULAR_RANGE_VAL         A_180_DEG
+#define IMU_MODE_VAL    	      ROLL_PITCH
+#define DEFAULT_CAN_ID		      0x66
+#define DEFAULT_CAN_BAUDRATE      CANOPEN_125KBPS
+
+#define FLASH_FREE				0
+#define FLASH_BUSY				1
+/* USER CODE END Includes */
+
+/* EEPROM Configuration Structure */
+typedef struct
+{
+    uint32_t SOFTWARE_VERSION;
+    uint32_t OUT_TYPE; // 0: Voltage, 1: Current, 2: CAN, 3: CAN + Voltage, 4: CAN + Current
+    uint32_t ANGULAR_RANGE; // 0: ± 90°, 1: ± 180°, 2: ± 360°, 3: fixed maximum range(DEBUG)
+    uint32_t IMU_MODE; // 0: Roll only, 1: Pitch only, 2: Roll & Pitch, 3: Roll, Pitch & Yaw
+    uint32_t CAN_ID; // CAN ID for CAN output mode
+    uint32_t EEPROM_STATUS_ID;
+    uint32_t RAM_STATUS_ID;
+    uint32_t CAN_BAUDRATE; // CAN baud rate for CAN output mode
+    uint32_t EEPROM_STATUS_BAUDRATE;
+    uint32_t RAM_STATUS_BAUDRATE;
+} EEPROM_Config_t;
+
+/* Global EEPROM config instance */
+extern EEPROM_Config_t EEPROM_CONFIG;
+extern EEPROM_Config_t EEPROM_CONFIG_NEW;
+extern EEPROM_Config_t EEPROM_CONFIG_BACKUP;
+extern uint8_t flash_write_status;
+/* API Function Prototypes */
+void EEPROM_Init(void);
+void EEPROM_Read_Config_New(void);
+void EEPROM_Read_Default_Config(void);
+void EEPROM_Default_To_Backup(void);
+void EEPROM_Write_Config_Default(void);
+void EEPROM_Write_Config_New(void);
+void EEPROM_Check_For_Config_New(void);
+uint8_t is_non_zero_config(const EEPROM_Config_t *cfg);
+void EEPROM_Set_Default(void);
+void EEPROM_Set_Default_New(void);
+void EEPROM_Set_Default_Empty(void);
+#endif /* EEPROM_H */

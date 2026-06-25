@@ -1,0 +1,194 @@
+/**
+  ******************************************************************************
+  * @file    analog_output.c
+  * @brief   Implementation of flexible analog output via DAC1 channels.
+  ******************************************************************************
+  */
+
+#include "analog_output.h"
+#include "stm32g4xx_hal.h" // For HAL_Delay()
+#include "iwdg.h"
+#include "imu.h"
+
+
+int32_t in_min, in_max;
+uint32_t dac_min, dac_max;
+uint32_t dac_range;
+uint16_t dac1_out1_value, dac1_out2_value;
+
+void DAC_Init_Param(void)
+{
+  if (EEPROM_CONFIG_BACKUP.OUT_TYPE == CURRENT || EEPROM_CONFIG_BACKUP.OUT_TYPE == VOLTAGE || EEPROM_CONFIG_BACKUP.OUT_TYPE == CAN_V || EEPROM_CONFIG_BACKUP.OUT_TYPE == CAN_C)
+  {
+    if (EEPROM_CONFIG_BACKUP.OUT_TYPE == VOLTAGE || EEPROM_CONFIG_BACKUP.OUT_TYPE == CAN_V)
+    {
+      dac_min = DAC_OUTPUT_VOLTAGE_MIN;
+      dac_max = DAC_OUTPUT_VOLTAGE_MAX;
+    }
+    else if (EEPROM_CONFIG_BACKUP.OUT_TYPE == CURRENT || EEPROM_CONFIG_BACKUP.OUT_TYPE == CAN_C)
+    {
+      dac_min = DAC_OUTPUT_CURRENT_MIN;
+      dac_max = DAC_OUTPUT_CURRENT_MAX;
+    }
+    else
+    {
+      dac_min = 0U;
+      dac_max = 0U;
+    }
+    dac_range = dac_max -  dac_min;
+    if(EEPROM_CONFIG_BACKUP.ANGULAR_RANGE == A_0_30_DEG)
+    {
+      in_min =  INPUT_MIN_0_DEG; // 0 degrees
+      in_max =  INPUT_MAX_30_DEG; // +30.00 degrees
+    }
+    else if(EEPROM_CONFIG_BACKUP.ANGULAR_RANGE == A_90_DEG)
+    {
+      in_min =  INPUT_MIN_90_DEG; // -90.00 degrees
+      in_max =  INPUT_MAX_90_DEG; // +90.00 degrees
+    }
+    else if(EEPROM_CONFIG_BACKUP.ANGULAR_RANGE == A_180_DEG)
+    {
+      in_min =  INPUT_MIN_180_DEG; // -180.00 degrees
+      in_max =  INPUT_MAX_180_DEG; // +180.00 degrees
+    }
+    else if(EEPROM_CONFIG_BACKUP.ANGULAR_RANGE == A_360_DEG)
+    {
+      in_min =  INPUT_MIN_360_DEG; // 0 degrees
+      in_max =  INPUT_MAX_360_DEG; // +360.00 degrees
+    }
+    else if(EEPROM_CONFIG_BACKUP.ANGULAR_RANGE == A_FULL_FIXED_DBG)
+    {
+      in_min =  INPUT_MIN_360_DEG; // 0 degrees
+      in_max =  INPUT_MAX_360_DEG; // +360.00 degrees
+    }
+  }
+}
+
+/**
+  * @brief DAC management function
+  * This function updates the DAC outputs with the latest IMU data.
+  * It sets the DAC1_OUT1 to the Roll value and DAC1_OUT2 to the Pitch value.
+  */
+void Manage_DAC(void)
+{
+	  if(flash_write_status == FLASH_FREE)
+	  {
+		  // Update the DAC outputs with the latest IMU data
+			if(EEPROM_CONFIG_BACKUP.ANGULAR_RANGE == A_90_DEG)
+			{
+			    if (EEPROM_CONFIG_BACKUP.IMU_MODE == ROLL_ONLY)
+			    {
+			      dac1_out1_value = Map_Angle_To_DAC(Sensor_Output_Data.Signed_90.Roll, in_min, in_max);
+			      dac1_out2_value = 0;
+			    }
+			    else if (EEPROM_CONFIG_BACKUP.IMU_MODE == PITCH_ONLY)
+			    {
+			      dac1_out1_value = 0;
+			      dac1_out2_value = Map_Angle_To_DAC(Sensor_Output_Data.Signed_90.Pitch, in_min, in_max);
+			    }
+			    else if (EEPROM_CONFIG_BACKUP.IMU_MODE == ROLL_PITCH_YAW)
+			    {
+			      dac1_out1_value = Map_Angle_To_DAC(Sensor_Output_Data.Signed_90.Roll, in_min, in_max);
+			      dac1_out2_value = Map_Angle_To_DAC(Sensor_Output_Data.Signed_90.Pitch, in_min, in_max);
+
+			    }
+			    else if (EEPROM_CONFIG_BACKUP.IMU_MODE == ROLL_PITCH)
+			    {
+			      dac1_out1_value = Map_Angle_To_DAC(Sensor_Output_Data.Signed_90.Roll, in_min, in_max);
+			      dac1_out2_value = Map_Angle_To_DAC(Sensor_Output_Data.Signed_90.Pitch, in_min, in_max);
+			    }
+			}
+
+			if(EEPROM_CONFIG_BACKUP.ANGULAR_RANGE == A_180_DEG)
+			{
+			    if (EEPROM_CONFIG_BACKUP.IMU_MODE == ROLL_ONLY)
+			    {
+			      dac1_out1_value = Map_Angle_To_DAC(Sensor_Output_Data.Signed_180.Roll, in_min, in_max);
+			      dac1_out2_value = 0;
+			    }
+			    else if (EEPROM_CONFIG_BACKUP.IMU_MODE == PITCH_ONLY)
+			    {
+			      dac1_out1_value = 0;
+			      dac1_out2_value = Map_Angle_To_DAC(Sensor_Output_Data.Signed_180.Pitch, in_min, in_max);
+			    }
+			    else if (EEPROM_CONFIG_BACKUP.IMU_MODE == ROLL_PITCH_YAW)
+			    {
+			      dac1_out1_value = Map_Angle_To_DAC(Sensor_Output_Data.Signed_180.Roll, in_min, in_max);
+			      dac1_out2_value = Map_Angle_To_DAC(Sensor_Output_Data.Signed_180.Pitch, in_min, in_max);
+			    }
+			    else if (EEPROM_CONFIG_BACKUP.IMU_MODE == ROLL_PITCH)
+			    {
+			      dac1_out1_value = Map_Angle_To_DAC(Sensor_Output_Data.Signed_180.Roll, in_min, in_max);
+			      dac1_out2_value = Map_Angle_To_DAC(Sensor_Output_Data.Signed_180.Pitch, in_min, in_max);
+			    }
+			}
+
+			if(EEPROM_CONFIG_BACKUP.ANGULAR_RANGE == A_360_DEG)
+			{
+			    if (EEPROM_CONFIG_BACKUP.IMU_MODE == ROLL_ONLY)
+			    {
+			      dac1_out1_value = Map_Angle_To_DAC(Sensor_Output_Data.Unsigned.Roll, in_min, in_max);
+			      dac1_out2_value = 0;
+			    }
+			    else if (EEPROM_CONFIG_BACKUP.IMU_MODE == PITCH_ONLY)
+			    {
+			      dac1_out1_value = 0;
+			      dac1_out2_value = Map_Angle_To_DAC(Sensor_Output_Data.Unsigned.Pitch, in_min, in_max);
+			    }
+			    else if (EEPROM_CONFIG_BACKUP.IMU_MODE == ROLL_PITCH_YAW)
+			    {
+			      dac1_out1_value = Map_Angle_To_DAC(Sensor_Output_Data.Unsigned.Roll, in_min, in_max);
+			      dac1_out2_value = Map_Angle_To_DAC(Sensor_Output_Data.Unsigned.Pitch, in_min, in_max);
+			    }
+			    else if (EEPROM_CONFIG_BACKUP.IMU_MODE == ROLL_PITCH)
+			    {
+			      dac1_out1_value = Map_Angle_To_DAC(Sensor_Output_Data.Unsigned.Roll, in_min, in_max);
+			      dac1_out2_value = Map_Angle_To_DAC(Sensor_Output_Data.Unsigned.Pitch, in_min, in_max);
+			    }
+			}
+			if(EEPROM_CONFIG_BACKUP.ANGULAR_RANGE == A_FULL_FIXED_DBG)
+			{
+			  dac1_out1_value = Map_Angle_To_DAC((in_max*100), in_min, in_max);
+			  dac1_out2_value = Map_Angle_To_DAC((in_max*100), in_min, in_max);
+			}
+
+		  AnalogOutput_SetDAC1_OUT1(dac1_out1_value);
+		  AnalogOutput_SetDAC1_OUT2(dac1_out2_value);
+		  //HAL_IWDG_Refresh(&hiwdg);
+	  }
+
+}
+
+uint16_t Map_Angle_To_DAC(float angle, float angle_min, float angle_max)
+{
+	float angle_in_deg = angle/100;
+    // Clamp input angle within expected range
+    if (angle_in_deg < angle_min) angle = angle_min;
+    if (angle_in_deg > angle_max) angle = angle_max;
+
+    // Linear mapping formula
+    float mapped = ((angle_in_deg - angle_min) * (dac_max - dac_min)) / (angle_max - angle_min) + dac_min;
+
+    return (uint16_t)mapped;
+}
+
+void AnalogOutput_SetDAC1_OUT1(int32_t value)
+{
+  if (value < dac_min) value = dac_min;
+  if (value > dac_max) value = dac_max;
+  
+  HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_1, DAC_ALIGN_12B_R, value);
+  HAL_DAC_Start(&hdac1, DAC_CHANNEL_1);
+}
+
+void AnalogOutput_SetDAC1_OUT2(int32_t value)
+{
+  if (value < dac_min) value = dac_min;
+  if (value > dac_max) value = dac_max;
+
+  HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_2, DAC_ALIGN_12B_R, value);
+  HAL_DAC_Start(&hdac1, DAC_CHANNEL_2);
+}
+
+
+
