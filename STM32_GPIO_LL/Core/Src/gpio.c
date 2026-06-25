@@ -5,120 +5,98 @@
  *      Author: shoja
  */
 
-#include "stm32f4xx.h"
+#include "stm32f4xx_ll_gpio.h"
+#include "stm32f4xx_ll_bus.h"
 
-void LED_init (void)
+void LED_init(void)
 {
-    // Enable GPIOA clock
-    RCC->AHB1ENR |= (1U << 0); // Enable clock for GPIOA
+    /* Enable GPIOA clock */
+    LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOA);
 
-    // --- PA5 configuration ---
-
-    // MODER5 = 01 (output)
-    GPIOA->MODER &= ~(3U <<10); // Clear MODER5 bits
-    GPIOA->MODER |= (1U <<10);  // Set MODER5 to 01 (output)
-
-    // OTYPER5 = 0 (push-pull)
-    GPIOA->OTYPER &= ~(1U <<5); // Set OTYPER5 to 0 (push-pull)
-
-    // OSPEEDR5 = 00 (low speed)
-    GPIOA->OSPEEDR &= ~(3U <<10); // Set OSPEEDR5 to 00 (low speed)
-
-    // PUPDR5 = 00 (no pull-up, no pull-down)
-    GPIOA->PUPDR &= ~(3U <<10); // Set PUPDR5 to 00 (no pull-up, no pull-down)  
+    /* PA5 configuration */
+    LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_5, LL_GPIO_MODE_OUTPUT);
+    LL_GPIO_SetPinSpeed(GPIOA, LL_GPIO_PIN_5, LL_GPIO_SPEED_FREQ_LOW);
+    LL_GPIO_SetPinOutputType(GPIOA, LL_GPIO_PIN_5, LL_GPIO_OUTPUT_PUSHPULL);
+    LL_GPIO_SetPinPull(GPIOA, LL_GPIO_PIN_5, LL_GPIO_PULL_NO);
 }
-void OUTPUT_init_PB8 (void)
+
+void OUTPUT_init_PB8(void)
 {
-    // Enable GPIOB clock
-    RCC->AHB1ENR |= (1U << 1); // Enable clock for GPIOB
+    /* Enable GPIOB clock */
+    LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOB);
 
-    // --- PB8 configuration ---
-
-    // MODER8 = 01 (output)
-    GPIOB->MODER &= ~(3U <<16); // Clear MODER8 bits
-    GPIOB->MODER |= (1U <<16);  // Set MODER8 to 01 (output)
-
-    // OTYPER8 = 0 (push-pull)
-    GPIOB->OTYPER &= ~(1U <<8); // Set OTYPER8 to 0 (push-pull)
-
-    // OSPEEDR8 = 00 (low speed)
-    GPIOB->OSPEEDR &= ~(3U <<16); // Set OSPEEDR8 to 00 (low speed)
-
-    // PUPDR8 = 00 (no pull-up, no pull-down)
-    GPIOB->PUPDR &= ~(3U <<16); // Set PUPDR8 to 00 (no pull-up, no pull-down)  
+    /* PB8 configuration */
+    LL_GPIO_SetPinMode(GPIOB, LL_GPIO_PIN_8, LL_GPIO_MODE_OUTPUT);
+    LL_GPIO_SetPinSpeed(GPIOB, LL_GPIO_PIN_8, LL_GPIO_SPEED_FREQ_LOW);
+    LL_GPIO_SetPinOutputType(GPIOB, LL_GPIO_PIN_8, LL_GPIO_OUTPUT_PUSHPULL);
+    LL_GPIO_SetPinPull(GPIOB, LL_GPIO_PIN_8, LL_GPIO_PULL_NO);
 }
-void OUTPUT_init_PC7 (void)
+
+void OUTPUT_init_PC7(void)
 {
-    // Enable GPIOC clock
-    RCC->AHB1ENR |= (1U << 2); // Enable clock for GPIOC
+    /* Enable GPIOC clock */
+    LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOC);
 
-    // --- PC7 configuration ---
-
-    // MODER7 = 01 (output)
-    GPIOC->MODER &= ~(3U <<14); // Clear MODER7 bits
-    GPIOC->MODER |= (1U <<14);  // Set MODER7 to 01 (output)
-
-    // OTYPER7 = 0 (push-pull)
-    GPIOC->OTYPER &= ~(1U <<7); // Set OTYPER7 to 0 (push-pull)
-
-    // OSPEEDR7 = 00 (low speed)
-    GPIOC->OSPEEDR &= ~(3U <<14); // Set OSPEEDR7 to 00 (low speed)
-
-    // PUPDR7 = 00 (no pull-up, no pull-down)
-    GPIOC->PUPDR &= ~(3U <<14); // Set PUPDR7 to 00 (no pull-up, no pull-down)  
+    /* PC7 configuration */
+    LL_GPIO_SetPinMode(GPIOC, LL_GPIO_PIN_7, LL_GPIO_MODE_OUTPUT);
+    LL_GPIO_SetPinSpeed(GPIOC, LL_GPIO_PIN_7, LL_GPIO_SPEED_FREQ_LOW);
+    LL_GPIO_SetPinOutputType(GPIOC, LL_GPIO_PIN_7, LL_GPIO_OUTPUT_PUSHPULL);
+    LL_GPIO_SetPinPull(GPIOC, LL_GPIO_PIN_7, LL_GPIO_PULL_NO);
 }
+
 void LED_Blink_Fast(void)
 {
-    GPIOA->ODR ^= (1U << 5); // Toggle PA5
-    for (volatile int i = 0; i < 50000; i++); // Delay
+    LL_GPIO_TogglePin(GPIOA, LL_GPIO_PIN_5); /* Toggle PA5 */
+    for (volatile int i = 0; i < 50000; i++); /* Delay */
 }
+
 uint8_t OUTPUT_PB8_Blink_Fast(void)
 {
-    for (volatile int i = 0; i < 50000; i++); // Delay
-    GPIOB->ODR ^= (1U << 8); // Toggle PB8
-    return (GPIOB->ODR & (1U << 8)) ? 1 : 0; // Return the state of PB8
+    for (volatile int i = 0; i < 50000; i++); /* Delay */
+    LL_GPIO_TogglePin(GPIOB, LL_GPIO_PIN_8); /* Toggle PB8 */
+    return LL_GPIO_IsOutputPinSet(GPIOB, LL_GPIO_PIN_8) ? 1 : 0;
 }
+
 uint8_t OUTPUT_PC7_Blink_Fast(void)
 {
-    for (volatile int i = 0; i < 50000; i++); // Delay
-    GPIOC->ODR ^= (1U << 7); // Toggle PC7
-    return (GPIOC->ODR & (1U << 7)) ? 1 : 0; // Return the state of PC7
+    for (volatile int i = 0; i < 50000; i++); /* Delay */
+    LL_GPIO_TogglePin(GPIOC, LL_GPIO_PIN_7); /* Toggle PC7 */
+    return LL_GPIO_IsOutputPinSet(GPIOC, LL_GPIO_PIN_7) ? 1 : 0;
 }
+
 void Police_Blink_Fast(void)
 {
-    uint8_t temp = 0;
-    temp = (GPIOC->ODR & (1U << 7)) ? 1 : 0;
-    if (temp == 1)
+    if (LL_GPIO_IsOutputPinSet(GPIOC, LL_GPIO_PIN_7))
     {
-        GPIOC->ODR &= ~(1U << 7); // Turn off PC7
-        GPIOB->ODR |= (1U << 8);  // Turn on PB8
+        LL_GPIO_ResetOutputPin(GPIOC, LL_GPIO_PIN_7); /* Turn off PC7 */
+        LL_GPIO_SetOutputPin(GPIOB, LL_GPIO_PIN_8);     /* Turn on PB8 */
     }
     else
     {
-        GPIOB->ODR &= ~(1U << 8); // Turn off PB8
-        GPIOC->ODR |= (1U << 7);  // Turn on PC7
+        LL_GPIO_ResetOutputPin(GPIOB, LL_GPIO_PIN_8); /* Turn off PB8 */
+        LL_GPIO_SetOutputPin(GPIOC, LL_GPIO_PIN_7);   /* Turn on PC7 */
     }
-    for (volatile int i = 0; i < 100000; i++); // Delay
+    for (volatile int i = 0; i < 100000; i++); /* Delay */
 }
+
 void BUTTON_init_PC13(void)
 {
-    // Enable GPIOC clock
-    RCC->AHB1ENR |= (1U << 2); // Enable clock for GPIOC
+    /* Enable GPIOC clock */
+    LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOC);
 
-    // --- PC13 configuration ---
-
-    // MODER13 = 00 (input)
-    GPIOC->MODER &= ~(3U << 26); // Clear MODER13 bits
-
-    GPIOC->PUPDR &= ~(3U << 26); // Clear PUPDR13 bits
-    GPIOC->PUPDR |= (1U << 26);  // Set PUPDR13 to 01 (pull-up)
+    /* PC13 configuration */
+    LL_GPIO_SetPinMode(GPIOC, LL_GPIO_PIN_13, LL_GPIO_MODE_INPUT);
+    LL_GPIO_SetPinPull(GPIOC, LL_GPIO_PIN_13, LL_GPIO_PULL_UP);
+    LL_GPIO_SetPinSpeed(GPIOC, LL_GPIO_PIN_13, LL_GPIO_SPEED_FREQ_LOW);
 }
+
 uint8_t BUTTON_Read_PC13(void)
 {
-    return (GPIOC->IDR & (1U << 13)) ? 1 : 0; // Return the state of PC13
+    return LL_GPIO_IsInputPinSet(GPIOC, LL_GPIO_PIN_13) ? 1 : 0;
 }
+
 uint8_t LED_Reset(void)
 {
-    GPIOA->ODR &= ~(1U << 5); // Turn off PA5
-    return (GPIOA->ODR & (1U << 5)) ? 1 : 0; // Return the state of PA5
+    LL_GPIO_ResetOutputPin(GPIOA, LL_GPIO_PIN_5); /* Turn off PA5 */
+    return LL_GPIO_IsOutputPinSet(GPIOA, LL_GPIO_PIN_5) ? 1 : 0;
 }
